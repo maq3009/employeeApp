@@ -95,7 +95,17 @@ class AuthService extends ChangeNotifier {
       }
     } catch (e) {
       setIsLoading = false;
+      if (e is AuthException && e.message.contains('Failed Host Lookup')) {
+        // Handle network connectivity issue
+        Utils.showSnackBar(
+          'No se pudo conectar al servidor. Revise su conexión a internet.', 
+          context, 
+          color: Colors.red,
+      );
+
+     } else {
       Utils.showSnackBar(e.toString(), context, color: Colors.red);
+    }
     }
   }
 

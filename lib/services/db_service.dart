@@ -16,7 +16,7 @@ class DbService extends ChangeNotifier {
   Future insertNewUser(String email, String id) async {
     await _supabase.from(Constants.employeeTable).insert({
       'id': id,
-      'name': '',
+      'name': 'name',
       'email': 'email',
       'employee_id': generateRandomEmployeeId(),
       'department': null
