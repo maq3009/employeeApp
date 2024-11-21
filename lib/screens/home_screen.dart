@@ -1,3 +1,6 @@
+import 'package:employee_attendance/screens/attendance_screen.dart';
+import 'package:employee_attendance/screens/calendar_screen.dart';
+import 'package:employee_attendance/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -12,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 
 class _HomeScreenState extends State<HomeScreen> {
+
 
   int currentIndex = 1;
 
@@ -30,8 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const Center(
-        child: Text("Home Screen"),
+      body: IndexedStack(
+        index: currentIndex,
+        children: const [
+          CalendarScreen(),
+          AttendanceScreen(),
+          ProfileScreen()
+        ],
       ),
       bottomNavigationBar: Container(
         height: 70,

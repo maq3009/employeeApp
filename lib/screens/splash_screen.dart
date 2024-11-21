@@ -9,6 +9,8 @@ import './login_screen.dart';
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
+  //authService.signOut();
+
 
   @override
   Widget build(BuildContext context) {

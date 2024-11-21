@@ -48,23 +48,20 @@ class AuthService extends ChangeNotifier {
         throw Exception("Todos los campos son requeridos");
       }
 
-      final AuthResponse response = await _supabase.auth.signUp(
-        email: email,
-        password: password,
+      final AuthResponse response = 
+        await _supabase.auth.signUp(
+          email: email,
+          password: password,
       );
-      await _dbService.insertNewUser(email, response.user!.id);
-    
-      Utils.showSnackBar(
-        "¡Éxito! Ahora puede entrar con sus credenciales", 
-        context, 
-        color: Colors.green,
-      );
-
+      await _dbService.insertNewUser(email, response.user!.id); 
+      Utils.showSnackBar("Exito ! Ahora puede entrar a la aplicacion", context, 
+        color: Colors.green);
+      await loginEmployee(email, password, context);
       Navigator.pop(context);
-    } catch (e) {
-      Utils.showSnackBar(e.toString(), context, color: Colors.red);
-    } finally {
+
+        } catch (e) {
       setIsLoading = false;
+      Utils.showSnackBar(e.toString(), context, color: Colors.red);
     }
   }
 
@@ -83,32 +80,13 @@ class AuthService extends ChangeNotifier {
 
       final AuthResponse response = await _supabase.auth.signInWithPassword(
         email: email,
-        password: password,
-      );
-      if(response.user != null) {
-      await _dbService.insertNewUser(email, response.user!.id);
-
-
-      Utils.showSnackBar("¡Inicio de sesión exitoso!", context, color: Colors.green);
-        await loginEmployee(email, password, context);
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      setIsLoading = false;
-      if (e is AuthException && e.message.contains('Failed Host Lookup')) {
-        // Handle network connectivity issue
-        Utils.showSnackBar(
-          'No se pudo conectar al servidor. Revise su conexión a internet.', 
-          context, 
-          color: Colors.red,
-      );
-
-     } else {
-      Utils.showSnackBar(e.toString(), context, color: Colors.red);
-    }
-    }
+        password: password,);
+        setIsLoading = false;
+        } catch (e) {
+        setIsLoading = false;
+        Utils.showSnackBar(e.toString(), context, color: Colors.red
+        );}
   }
-
   /// Logs out the current user
   Future<void> signOut() async {
     await _supabase.auth.signOut();
