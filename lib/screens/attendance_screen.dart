@@ -1,4 +1,9 @@
+import 'package:employee_attendance/models/user_model.dart';
+import 'package:employee_attendance/services/attendance_service.dart';
+import 'package:employee_attendance/services/db_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 
 
@@ -15,29 +20,57 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   final GlobalKey<SlideActionState> key = GlobalKey<SlideActionState>();
   
+
+  @override
+  void initState() {
+    Provider.of<AttendanceService>(context, listen: false).getTodayAttendance();
+    // Provider.of<AttendanceService>(context, listen: false).resetAttendance();
+    super.initState();
+  }
   
   @override
   Widget build(BuildContext context) {
+    final attendanceService = Provider.of<AttendanceService>(context);
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(top: 32),
-              child: const Text(
-                "Welcome",
-                style: TextStyle(color: Colors.black54, fontSize: 30),
-        ),
-      ),
       Container(
         alignment: Alignment.centerLeft,
+        margin: const EdgeInsets.only(top: 32),
         child: const Text(
-          'Employee Name',
-          style: TextStyle(fontSize: 25),
-        ),
-        ),
+          "Welcome",
+          style: TextStyle(color: Colors.black54, fontSize: 30),
+          ),
+      ),
+      Consumer<DbService>(
+        builder: (context, dbService, child) {
+          return FutureBuilder(
+            future: dbService.getUserData(),
+            builder: (context, snapshot) {
+
+
+            if (snapshot.hasData) {
+              UserModel user = snapshot.data!;
+
+              
+              return Container(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  user.name != '' ? user.name : "#${user.employeeId}",
+                  style: const TextStyle(fontSize: 25),
+                ),
+            );
+            }
+              return const SizedBox(
+                width: 60,
+                child: LinearProgressIndicator(),
+                 );
+            
+          });
+      }),
+
       Container(
         alignment: Alignment.centerLeft,
         margin: const EdgeInsets.only(top: 32),
@@ -58,7 +91,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               offset: Offset(2,2)),
           ],
           borderRadius: BorderRadius.all(Radius.circular(20))),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -68,9 +101,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text("Check In", style: TextStyle(fontSize: 20, color: Colors.black54),),
-              SizedBox(width: 80, child: Divider(),),
-              Text("09:30", style: TextStyle(fontSize: 25),)       
+              const Text(
+                 "Check In",
+                 style: TextStyle(fontSize: 20, color: Colors.black54),
+                 ),
+              const SizedBox(
+                 width: 80,
+                 child: Divider(),
+              ),
+              Text(
+                 attendanceService.attendanceModel?.checkIn ?? '--/--',
+                 style: const TextStyle(fontSize: 25),
+              )       
             ],
               )),
 
@@ -79,9 +121,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text("Check Out", style: TextStyle(fontSize: 20, color: Colors.black54),),
-              SizedBox(width: 80, child: Divider(),),
-              Text("--:--", style: TextStyle(fontSize: 25),)       
+              const Text(
+                "Check Out",
+                style: TextStyle(fontSize: 20, color: Colors.black54),),
+              const SizedBox(
+                width: 80,
+                child: Divider(),
+                ),
+              Text(
+                attendanceService.attendanceModel?.checkOut ?? '--/--',
+                 style: const TextStyle(fontSize: 25),)       
             ],
               )),
             ]),
@@ -90,32 +139,40 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           Container(
             alignment: Alignment.centerLeft,
             child: Text(
-              "15 April ",
-              style: TextStyle(fontSize: 20),
+              DateFormat("dd-MMMM-yyyy").format(DateTime.now()),
+              style: const TextStyle(fontSize: 20),
               ),
           ),
-          Container(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "15 April",
-               style: TextStyle(fontSize: 15, color: Colors.black54),
-          ),
+          StreamBuilder(
+            stream: Stream.periodic(const Duration(seconds: 1)),
+            builder: (context, snapshot) {
+              return Container(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  DateFormat("hh:mm:ss a").format(DateTime.now()),
+                   style: const TextStyle(fontSize: 15, color: Colors.black54),
+              ),
+              );
+            }
           ),
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: Builder(builder: (context) {
               return SlideAction(
-                text: "Slide to Check Out",
-                textStyle: TextStyle(
-                color: Colors.black54,
-                fontSize: 18,
+                text: attendanceService.attendanceModel?.checkIn == null 
+                  ? "Deslize para Check In" 
+                  : "Deslize para Check Out",
+                textStyle: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 18,
               ),
               outerColor: Colors.white,
               innerColor: Colors.blueGrey,
               key: key,
-              onSubmit: () {
+              onSubmit: () async {
+                await attendanceService.markAttendance(context);
                 key.currentState!.reset();
-                return null;
+            
               },
               );
             }),

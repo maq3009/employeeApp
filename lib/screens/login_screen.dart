@@ -43,12 +43,16 @@ class _LoginScreenState extends State<LoginScreen> {
               bottomRight: Radius.circular(70),
             )
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.content_paste_sharp, color: Colors.white, size: 70,),
-              SizedBox(height: 10,),
-              Text("Hogar Estancias de Paz 2", style: TextStyle(
+               Image.asset(
+                  'assets/Healthcare.png',
+                  height: 110,
+                  width: 110,
+                ),
+              const SizedBox(height: 30,),
+              const Text("Hogar Estancias de Paz 2", style: TextStyle(
                 fontSize: 30,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
