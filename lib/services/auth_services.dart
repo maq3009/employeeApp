@@ -78,7 +78,7 @@ class AuthService extends ChangeNotifier {
         throw Exception("Todos los campos son requeridos");
       }
 
-      final AuthResponse response = await _supabase.auth.signInWithPassword(
+      await _supabase.auth.signInWithPassword(
         email: email,
         password: password,);
         setIsLoading = false;

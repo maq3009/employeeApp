@@ -13,7 +13,7 @@ class AttendanceModel {
     required this.createdAt,
   });
 
-  factory AttendanceModel.fromJson(Map<String, dynamic> data) {
+  factory AttendanceModel.fromJson(Map<String, Object> data) {
     return AttendanceModel(
       id: data['employee_id'] as String,
       date: data['date'] as String,
