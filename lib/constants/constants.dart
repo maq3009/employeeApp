@@ -1,5 +1,5 @@
 class Constants {
-  static const employeeTable = "Enfermeras";
+  static const employeeTable = "employees";
   static const departmentTable = "departments";
   static const attendanceTable = "attendance";
 }

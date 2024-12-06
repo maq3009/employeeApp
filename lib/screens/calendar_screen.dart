@@ -29,6 +29,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               attendanceService.attendanceHistoryMonth,

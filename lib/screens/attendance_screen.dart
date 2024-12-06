@@ -53,9 +53,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           user.name.isNotEmpty ? user.name : "#${user.employeeId}",
-                          style: const TextStyle(fontSize: 25),
-                        ),
-                      );
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ));
                     }
                     return const LinearProgressIndicator();
                   },

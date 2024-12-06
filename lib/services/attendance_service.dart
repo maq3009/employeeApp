@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:location/location.dart';
 
+
 class AttendanceService extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
   AttendanceModel? attendanceModel;
@@ -40,13 +41,13 @@ class AttendanceService extends ChangeNotifier {
     notifyListeners();
   }
 
+
   Future getTodayAttendance() async {
     final List result = await _supabase
         .from(Constants.attendanceTable)
         .select()
-        .eq('employee_id', _supabase.auth.currentUser!.id) // Use email as employee_id
+        .eq('employee_id', _supabase.auth.currentUser!.id)
         .eq('date', todayDate);
-
     if (result.isNotEmpty) {
       attendanceModel = AttendanceModel.fromJson(result.first);
     }
@@ -56,19 +57,21 @@ class AttendanceService extends ChangeNotifier {
   Future markAttendance(BuildContext context) async {
     DateTime now = DateTime.now();
     DateTime checkInTimeLimit = DateTime(now.year, now.month, now.day, 23, 0);
-    DateTime checkOutLimit = DateTime(now.year, now.month, now.day, 16, 30);
+    DateTime checkOutLimit = DateTime(now.year, now.month, now.day, 23, 30);
 
     Map? getLocation =
         await LocationService().initializeAndGetLocation(context);
-    if (getLocation != null) {
+    if (getLocation != null) 
+    {
       if (attendanceModel?.checkIn == null) {
         if (now.isAfter(checkInTimeLimit)) {
           Utils.showSnackBar(
               "It is past check-in time, better try tomorrow", context);
           return;
-        } else {
+        } else 
+        {
           await _supabase.from(Constants.attendanceTable).insert({
-            "employee_id": _supabase.auth.currentUser!.email, // Use email as employee_id
+            "employee_id": _supabase.auth.currentUser!.id,
             "date": todayDate,
             "check_in": DateFormat('HH:mm').format(DateTime.now()),
             "check_in_location": getLocation,
@@ -85,7 +88,7 @@ class AttendanceService extends ChangeNotifier {
               .update({
                 'check_out': DateFormat('HH:mm').format(DateTime.now()),
                 'check_out_location': getLocation})
-              .eq('employee_id', _supabase.auth.currentUser!.id) // Use email as employee_id
+              .eq('employee_id', _supabase.auth.currentUser!.id)
               .eq('date', todayDate);
         }
       } else {
@@ -102,7 +105,7 @@ class AttendanceService extends ChangeNotifier {
     final List data = await _supabase
         .from(Constants.attendanceTable)
         .select()
-        .eq('employee_id', _supabase.auth.currentUser!.id) // Use email as employee_id
+        .eq('employee_id', _supabase.auth.currentUser!.id)
         .textSearch('date', "'$attendanceHistoryMonth'", config: 'english')
         .order('created_at', ascending: false);
 
