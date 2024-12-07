@@ -57,7 +57,7 @@ class AttendanceService extends ChangeNotifier {
   Future markAttendance(BuildContext context) async {
     DateTime now = DateTime.now();
     DateTime checkInTimeLimit = DateTime(now.year, now.month, now.day, 23, 0);
-    DateTime checkOutLimit = DateTime(now.year, now.month, now.day, 0, 30);
+    DateTime checkOutLimit = DateTime(now.year, now.month, now.day, 0, 0);
 
     Map? getLocation =
         await LocationService().initializeAndGetLocation(context);
