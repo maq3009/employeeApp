@@ -63,4 +63,16 @@ class DbService extends ChangeNotifier {
     color: Colors.green);
     notifyListeners();
   }
+  Future<List<UserModel>> getAllEmployees() async {
+  try {
+    // Fetch all employees from the employee table
+    final List response = await _supabase.from(Constants.employeeTable).select();
+
+    // Map the response data to a list of UserModel objects
+    return response.map((e) => UserModel.fromJson(e)).toList();
+  } catch (e) {
+    debugPrint("Error fetching employees: $e");
+    return [];
+    }
+  }
 }

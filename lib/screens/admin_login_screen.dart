@@ -1,17 +1,15 @@
-import 'package:employee_attendance/screens/admin_login_screen.dart';
-import 'package:employee_attendance/screens/register_screen.dart';
 import 'package:employee_attendance/services/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -51,6 +49,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontFamily: "cursive",
                   ),
                 ),
+                const Center(
+                  child: Text(
+                    "Admin Login Screen",
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: "cursive",
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -61,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 TextField(
                   decoration: const InputDecoration(
-                    label: Text("Email de Empleado"),
+                    label: Text("Email de Admin"),
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(borderSide: BorderSide()),
                   ),
@@ -70,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   decoration: const InputDecoration(
-                    label: Text("Password de Empleado"),
+                    label: Text("Password de Admin"),
                     prefixIcon: Icon(Icons.lock),
                     border: OutlineInputBorder(borderSide: BorderSide()),
                   ),
@@ -84,12 +93,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 60,
                       width: double.infinity,
                       child: authServiceProvider.isLoading
-                          ? const Center(child: CircularProgressIndicator())
+                          ? const Center(
+                              child: CircularProgressIndicator(),
+                            )
                           : ElevatedButton(
                               onPressed: () {
-                                authServiceProvider.loginEmployee(
-                                  _emailController.text.trim(),
-                                  _passwordController.text.trim(),
+                                final email = _emailController.text.trim();
+                                final password = _passwordController.text.trim();
+
+                                if (email.isEmpty || password.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Por favor, rellene todos los campos.",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                authServiceProvider.loginAdmin(
+                                  email,
+                                  password,
                                   context,
                                 );
                               },
@@ -111,41 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminLoginScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueGrey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    "Admin Log In",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text("Nuevo Empleado? Registrese aqui"),
-                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

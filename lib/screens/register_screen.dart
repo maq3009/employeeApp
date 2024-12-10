@@ -35,17 +35,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               bottomRight: Radius.circular(70),
             )
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.content_paste_sharp, color: Colors.white, size: 70, ),
-              SizedBox(height: 10,),
-              Text("EmpAtt", style: TextStyle(
-                fontSize: 25,
+               Image.asset(
+                  'assets/Healthcare.png',
+                  height: 110,
+                  width: 110,
+                ),
+              const SizedBox(height: 10,),
+              const Text("Hogar Estancias de Paz 2", style: TextStyle(
+                fontSize: 30,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontFamily:  "cursive"
-              ),)
+                fontFamily: "cursive"
+              ),),
             ],
           ),
         ),

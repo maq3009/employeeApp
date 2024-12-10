@@ -22,9 +22,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
         Container(
           alignment: Alignment.centerLeft,
           margin: const EdgeInsets.only(left: 20, top: 60, bottom: 10),
-          child: const Text(
-            "Mi Atendencia",
-            style: TextStyle(fontSize: 25),
+          
+          child: const Center(
+            child: Text(
+              "Mi Atendencia",
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+                fontFamily: "cursive"
+                ),
+            ),
           ),
         ),
         Row(

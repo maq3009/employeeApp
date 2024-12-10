@@ -1,3 +1,5 @@
+import 'package:employee_attendance/screens/admin_calendar_screen.dart';
+import 'package:employee_attendance/screens/admin_splash_screen.dart';
 import 'package:employee_attendance/screens/splash_screen.dart';
 import 'package:employee_attendance/services/attendance_service.dart';
 import 'package:employee_attendance/services/auth_services.dart';
@@ -7,13 +9,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //load env
+  // Load environment variables
   await dotenv.load();
-  //initialize supabase
+  // Initialize Supabase
   String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
   String supabaseKey = dotenv.env['SUPABASE_KEY'] ?? '';
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
@@ -22,7 +22,8 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  //This widget is the root of your application
+
+  // This widget is the root of your application
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -35,10 +36,30 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: "Employee Attendance",
         theme: ThemeData(
-        primarySwatch: Colors.blue,
+          primarySwatch: Colors.blue,
         ),
+        // Define home screen
         home: const SplashScreen(),
-      )
+        // Define route generation logic
+onGenerateRoute: (settings) {
+  switch (settings.name) {
+    case '/adminCalendar':
+      final args = settings.arguments as Map<String, String>?;
+
+      return MaterialPageRoute(
+        builder: (context) => AdminCalendarScreen(
+          employeeId: args?['employeeId'],
+          employeeName: args?['employeeName'],
+        ),
+      );
+    default:
+      return MaterialPageRoute(
+        builder: (context) => const AdminSplashScreen(),
+      );
+  }
+},
+
+      ),
     );
   }
 }

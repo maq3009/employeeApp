@@ -93,6 +93,36 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> loginAdmin(
+  String email,
+  String password,
+  BuildContext context,
+) async {
+  try {
+    setIsLoading = true;
+
+    final response = await _supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+
+    if (response.user == null) {
+      throw Exception("No user found with these credentials.");
+    }
+
+    Utils.showSnackBar("Admin login successful!", context, color: Colors.green);
+
+    // Navigate to the admin screen or perform any post-login tasks
+    Navigator.pushNamed(context, '/adminCalendar');
+
+  } catch (e) {
+    setIsLoading = false;
+    Utils.showSnackBar("Admin login failed: ${e.toString()}", context, color: Colors.red);
+    debugPrint("Admin login error: $e");
+  }
+}
+
+
   /// Returns the currently signed-in user
   User? get currentUser => _supabase.auth.currentUser;
 

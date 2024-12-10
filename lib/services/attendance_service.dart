@@ -113,4 +113,17 @@ class AttendanceService extends ChangeNotifier {
         .map((attendance) => AttendanceModel.fromJson(attendance))
         .toList();
   }
+    Future<List<AttendanceModel>> getEmployeeAttendanceHistory(
+      String employeeId, String monthYear) async {
+    final List data = await _supabase
+        .from(Constants.attendanceTable)
+        .select()
+        .eq('employee_id', employeeId)
+        .textSearch('date', "'$monthYear'", config: 'english')
+        .order('created_at', ascending: false);
+
+    return data
+        .map((attendance) => AttendanceModel.fromJson(attendance))
+        .toList();
+  }
 }
