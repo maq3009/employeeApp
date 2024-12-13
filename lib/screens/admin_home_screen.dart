@@ -1,45 +1,49 @@
-import 'package:employee_attendance/screens/attendance_screen.dart';
-import 'package:employee_attendance/screens/calendar_screen.dart';
-import 'package:employee_attendance/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:employee_attendance/screens/admin_calendar_screen.dart';
+import 'package:employee_attendance/screens/profile_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
-
 class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({super.key});
+  const AdminHomeScreen({Key? key}) : super(key: key);
 
   @override
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
 }
 
-
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-
-
   int currentIndex = 1;
 
-  //List of Icons to navigate
-  List<IconData> navigationIcons = [
+  final List<Widget> screens = [
+    const AdminCalendarScreen(), // Include your AdminCalendarScreen here
+    const ProfileScreen(),       // Profile Screen for the admin
+  ];
+
+  final List<IconData> navigationIcons = [
     FontAwesomeIcons.solidCalendarDays,
     FontAwesomeIcons.solidUser,
   ];
-  
-  
-  
-  
-  
-  
+
+  final List<String> titles = [
+    "Admin Calendar",
+    "Admin Profile",
+  ];
+
+  void onTabTapped(int index) {
+    setState(() {
+      currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(titles[currentIndex]),
+        backgroundColor: Colors.blueGrey,
+      ),
       body: IndexedStack(
         index: currentIndex,
-        children: const [
-          CalendarScreen(),
-          AttendanceScreen(),
-          ProfileScreen()
-        ],
+        children: screens,
       ),
       bottomNavigationBar: Container(
         height: 70,
@@ -48,32 +52,30 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.all(Radius.circular(40)),
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(2, 2))
-          ]
+            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(2, 2)),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            for(int i = 0; i < navigationIcons.length; i++)  ...{
+            for (int i = 0; i < navigationIcons.length; i++) ...{
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      currentIndex = i;
-                    });
-                  },
-                child: Center(
-                  child: FaIcon(
-                    navigationIcons[i],
-                    color: i == currentIndex ? Colors.blueGrey : Colors.black54,
-                    size: i == currentIndex ? 30 : 26,
-                    )))
-                )
+                  onTap: () => onTabTapped(i),
+                  child: Center(
+                    child: FaIcon(
+                      navigationIcons[i],
+                      color: i == currentIndex ? Colors.blueGrey : Colors.black54,
+                      size: i == currentIndex ? 30 : 26,
+                    ),
+                  ),
+                ),
+              )
             }
-          ]
-        )
-      )
+          ],
+        ),
+      ),
     );
   }
 }

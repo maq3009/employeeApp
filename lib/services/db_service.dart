@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:employee_attendance/constants/constants.dart';
+import 'package:employee_attendance/models/attendance_model.dart';
 import 'package:employee_attendance/models/department_model.dart';
 import 'package:employee_attendance/models/user_model.dart';
 import 'package:employee_attendance/utils/utils.dart';
@@ -75,4 +76,17 @@ class DbService extends ChangeNotifier {
     return [];
     }
   }
+  Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String month) async {
+  try {
+    final List response = await _supabase
+        .from(Constants.attendanceTable) // Replace with your actual attendance table name
+        .select()
+        .eq('employee_id', employeeId)
+        .ilike('date', '$month%');
+    return response.map((e) => AttendanceModel.fromJson(e)).toList();
+  } catch (e) {
+    debugPrint("Error fetching attendance: $e");
+    return [];
+  }
+}
 }

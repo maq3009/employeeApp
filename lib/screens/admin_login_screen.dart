@@ -1,9 +1,10 @@
-import 'package:employee_attendance/services/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:employee_attendance/services/auth_services.dart';
+import 'package:employee_attendance/screens/admin_home_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
-  const AdminLoginScreen({super.key});
+  const AdminLoginScreen({Key? key}) : super(key: key);
 
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();
@@ -15,132 +16,64 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Column(
-        children: [
-          Container(
-            height: screenHeight / 3,
-            width: screenWidth,
-            decoration: const BoxDecoration(
-              color: Colors.blueGrey,
-              borderRadius: BorderRadius.only(
-                bottomRight: Radius.circular(70),
+      appBar: AppBar(
+        title: const Text('Admin Login'),
+        backgroundColor: Colors.blueGrey,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: "Admin Email",
+                prefixIcon: Icon(Icons.email),
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/Healthcare.png',
-                  height: 110,
-                  width: 110,
-                ),
-                const SizedBox(height: 30),
-                const Text(
-                  "Hogar Estancias de Paz 2",
-                  style: TextStyle(
-                    fontSize: 30,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "cursive",
-                  ),
-                ),
-                const Center(
-                  child: Text(
-                    "Admin Login Screen",
-                    style: TextStyle(
-                      fontSize: 30,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: "cursive",
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(
+                labelText: "Password",
+                prefixIcon: Icon(Icons.lock),
+              ),
+              obscureText: true,
             ),
-          ),
-          const SizedBox(height: 50),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                TextField(
-                  decoration: const InputDecoration(
-                    label: Text("Email de Admin"),
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(borderSide: BorderSide()),
-                  ),
-                  controller: _emailController,
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: const InputDecoration(
-                    label: Text("Password de Admin"),
-                    prefixIcon: Icon(Icons.lock),
-                    border: OutlineInputBorder(borderSide: BorderSide()),
-                  ),
-                  controller: _passwordController,
-                  obscureText: true,
-                ),
-                const SizedBox(height: 30),
-                Consumer<AuthService>(
-                  builder: (context, authServiceProvider, child) {
-                    return SizedBox(
-                      height: 60,
-                      width: double.infinity,
-                      child: authServiceProvider.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : ElevatedButton(
-                              onPressed: () {
-                                final email = _emailController.text.trim();
-                                final password = _passwordController.text.trim();
-
-                                if (email.isEmpty || password.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Por favor, rellene todos los campos.",
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                authServiceProvider.loginAdmin(
-                                  email,
-                                  password,
-                                  context,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueGrey,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+            const SizedBox(height: 24),
+            Consumer<AuthService>(
+              builder: (context, authService, _) {
+                return authService.isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: () async {
+                          final success = await authService.loginAdmin(
+                            _emailController.text.trim(),
+                            _passwordController.text.trim(),
+                          );
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AdminHomeScreen(),
                               ),
-                              child: const Text(
-                                "Login",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Invalid login credentials"),
                               ),
-                            ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-              ],
+                            );
+                          }
+                        },
+                        child: const Text("Log In"),
+                      );
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ]
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             for(int i = 0; i < navigationIcons.length; i++)  ...{
