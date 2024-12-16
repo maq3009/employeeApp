@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:employee_attendance/screens/admin_calendar_screen.dart';
 import 'package:employee_attendance/screens/profile_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:employee_attendance/models/user_model.dart';  // Import your UserModel
+import 'package:employee_attendance/services/user_service.dart'; // Import the UserService
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({Key? key}) : super(key: key);
@@ -11,11 +13,11 @@ class AdminHomeScreen extends StatefulWidget {
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  int currentIndex = 1;
+  int currentIndex = 0; // Set initial index to 0 for Admin Calendar
 
   final List<Widget> screens = [
-    const AdminCalendarScreen(), // Include your AdminCalendarScreen here
-    const ProfileScreen(),       // Profile Screen for the admin
+    const AdminCalendarScreen(employeeId: '', arguments: {}),
+    const ProfileScreen(),
   ];
 
   final List<IconData> navigationIcons = [
@@ -27,6 +29,40 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     "Admin Calendar",
     "Admin Profile",
   ];
+
+  List<UserModel> employees = []; // List to store employee data
+
+  @override
+  void initState() {
+    super.initState();
+    _getEmployees();  // Fetch employee data when the screen is initialized
+  }
+
+  // Fetch employee data
+  Future<void> _getEmployees() async {
+    final List<UserModel> fetchedEmployees = await UserService().getEmployees(); // Using the UserService
+    setState(() {
+      employees = fetchedEmployees;
+    });
+  }
+
+  // Method to navigate to AdminCalendarScreen when an employee is selected
+void _onEmployeeSelected(UserModel employee) {
+  print('Selected employee ID (UUID): ${employee.id}'); // Debugging
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AdminCalendarScreen(
+        employeeId: employee.id, // Pass the UUID instead of employeeId
+        arguments: {
+          'employeeName': employee.name,
+        },
+      ),
+    ),
+  );
+}
+
+
 
   void onTabTapped(int index) {
     setState(() {
@@ -41,10 +77,28 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         title: Text(titles[currentIndex]),
         backgroundColor: Colors.blueGrey,
       ),
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
-      ),
+      body: currentIndex == 0
+          ? Column(
+              children: [
+                // List of employee buttons
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: employees.length,
+                    itemBuilder: (context, index) {
+                      final employee = employees[index];
+                      return ListTile(
+                        title: Text(employee.name),
+                        onTap: () => _onEmployeeSelected(employee),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(
+              index: currentIndex,
+              children: screens,
+            ),
       bottomNavigationBar: Container(
         height: 70,
         margin: const EdgeInsets.only(left: 12, right: 12, bottom: 24),

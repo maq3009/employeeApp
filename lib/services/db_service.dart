@@ -89,4 +89,25 @@ class DbService extends ChangeNotifier {
     return [];
   }
 }
+Future<List<Map<String, dynamic>>> getAttendanceRecordsForEmployee(
+  String employeeId,
+  DateTime month,
+) async {
+  // Replace with your actual query logic
+  final yearMonth = "${month.year}-${month.month.toString().padLeft(2, '0')}";
+  final response = await _supabase
+      .from('attendance')
+      .select()
+      .eq('employeeId', employeeId)
+      .like('date', '$yearMonth-%');
+  
+  return (response as List)
+      .map((record) => {
+            "date": record["date"],
+            "checkIn": record["checkIn"],
+            "checkOut": record["checkOut"],
+          })
+      .toList();
+}
+
 }

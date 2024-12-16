@@ -41,24 +41,32 @@ class MyApp extends StatelessWidget {
         // Define home screen
         home: const SplashScreen(),
         // Define route generation logic
-onGenerateRoute: (settings) {
-  switch (settings.name) {
-    case '/adminCalendar':
-      final args = settings.arguments as Map<String, String>?;
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case '/adminCalendar':
+              final args = settings.arguments as Map<String, dynamic>?;
 
-      return MaterialPageRoute(
-        builder: (context) => AdminCalendarScreen(
-          employeeId: args?['employeeId'],
-          employeeName: args?['employeeName'],
-        ),
-      );
-    default:
-      return MaterialPageRoute(
-        builder: (context) => const AdminSplashScreen(),
-      );
-  }
-},
+              if (args == null || !args.containsKey('employeeId')) {
+                // If arguments are missing, navigate to a fallback screen or show an error
+                return MaterialPageRoute(
+                  builder: (context) => const AdminSplashScreen(),
+                );
+              }
 
+              return MaterialPageRoute(
+                builder: (context) => AdminCalendarScreen(
+                  employeeId: args['employeeId'],
+                  arguments: args,
+                ),
+              );
+
+            default:
+              // Fallback route
+              return MaterialPageRoute(
+                builder: (context) => const AdminSplashScreen(),
+              );
+          }
+        },
       ),
     );
   }

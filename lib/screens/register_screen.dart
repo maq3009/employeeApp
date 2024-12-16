@@ -49,7 +49,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontFamily: "cursive"
-              ),),
+              ),
+              ),
+              const SizedBox(height: 20),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(10.0,0,0,0),
+                    child :  Text(
+                      "Entre un email y password para registrarse a la aplicación, después regrese a la pagina de Login.",
+                      style: TextStyle(
+                      color: Colors.white),
+                    ),
+                  ),
+                )
             ],
           ),
         ),

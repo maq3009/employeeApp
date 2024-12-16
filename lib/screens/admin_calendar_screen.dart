@@ -1,96 +1,110 @@
-import 'package:employee_attendance/screens/admin_home_screen.dart';
+import 'package:employee_attendance/services/attendance_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:employee_attendance/services/attendance_service.dart';
-import 'package:employee_attendance/models/attendance_model.dart';
 import 'package:simple_month_year_picker/simple_month_year_picker.dart';
 
+import 'package:employee_attendance/models/attendance_model.dart';
+
 class AdminCalendarScreen extends StatefulWidget {
-  final String? employeeId;
-  final String? employeeName;
+  final Map<String, dynamic> arguments;
+  final dynamic employeeId;
 
   const AdminCalendarScreen({
-    super.key,
-    this.employeeId,
-    this.employeeName,
-  });
+    Key? key,
+    required this.arguments,
+    required this.employeeId,
+  }) : super(key: key);
 
   @override
   State<AdminCalendarScreen> createState() => _AdminCalendarScreenState();
 }
 
 class _AdminCalendarScreenState extends State<AdminCalendarScreen> {
-  String selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+  late String selectedMonthUI; // For UI display: 'MMMM yyyy'
+  late String selectedMonthService; // For service calls: 'yyyy-MM'
+  late AttendanceService attendanceService;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    selectedMonthUI = DateFormat('MMMM yyyy').format(now);
+    selectedMonthService = DateFormat('yyyy-MM').format(now);
+    attendanceService = Provider.of<AttendanceService>(context, listen: false);
+  }
+
+  Future<void> _selectMonth() async {
+    final DateTime? pickedDate = await SimpleMonthYearPicker.showMonthYearPickerDialog(
+      context: context,
+      disableFuture: true,
+    );
+    if (pickedDate != null) {
+      setState(() {
+        selectedMonthUI = DateFormat('MMMM yyyy').format(pickedDate);
+        selectedMonthService = DateFormat('yyyy-MM').format(pickedDate);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final attendanceService = Provider.of<AttendanceService>(context);
-    final employeeId = widget.employeeId ?? 'admin123'; // Fallback admin ID
-    final employeeName = widget.employeeName ?? 'Admin User'; // Fallback admin name
+    final String employeeName = widget.arguments['employeeName'] ?? 'Unknown';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Attendance for $employeeName"),
+        title: Text("Attendance: $employeeName"),
         backgroundColor: Colors.blueGrey,
       ),
       body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Text(
-                selectedMonth,
-                style: const TextStyle(fontSize: 18),
-              ),
-              OutlinedButton(
-                onPressed: () async {
-                  final selectedDate = await SimpleMonthYearPicker.showMonthYearPickerDialog(
-                    context: context,
-                    disableFuture: true,
-                  );
-                  if (selectedDate != null) {
-                    setState(() {
-                      selectedMonth = DateFormat('MMMM yyyy').format(selectedDate);
-                    });
-                  }
-                },
-                child: const Text("Choose Month"),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  selectedMonthUI, // Display in 'MMMM yyyy'
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                OutlinedButton(
+                  onPressed: _selectMonth,
+                  child: const Text("Select Month"),
+                ),
+              ],
+            ),
           ),
-          
           Expanded(
             child: FutureBuilder<List<AttendanceModel>>(
-              future: attendanceService.getEmployeeAttendanceHistory(employeeId, selectedMonth),
+              future: attendanceService.getAttendanceForEmployee(widget.employeeId, selectedMonthService),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final attendance = snapshot.data![index];
-                      return Card(
-                        margin: const EdgeInsets.all(10),
-                        child: ListTile(
-                          title: Text(
-                            DateFormat('EEE, dd MMM yyyy').format(attendance.createdAt),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Check In: ${attendance.checkIn}"),
-                              Text("Check Out: ${attendance.checkOut ?? '--/--'}"),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text("No attendance data for this month."),
                   );
-                } else {
-                  return const Center(child: Text("No data available."));
                 }
+
+                final attendanceData = snapshot.data!;
+                return ListView.builder(
+                  itemCount: attendanceData.length,
+                  itemBuilder: (context, index) {
+                    final attendance = attendanceData[index];
+                    return ListTile(
+                      title: Text(DateFormat("EE, MMM dd").format(attendance.createdAt)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Check In: ${attendance.checkIn}"),
+                          Text("Check Out: ${attendance.checkOut ?? '--/--'}"),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),

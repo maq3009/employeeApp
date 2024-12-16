@@ -1,99 +1,105 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+// import 'package:employee_attendance/models/attendance_model.dart';
+// import 'package:flutter/material.dart';
+// import 'package:intl/intl.dart';
+// import 'package:employee_attendance/models/user_model.dart';
+// import 'package:employee_attendance/services/attendance_service.dart';
+// import 'package:simple_month_year_picker/simple_month_year_picker.dart';
+// import 'package:provider/provider.dart';
+// import 'admin_calendar_screen.dart'; // Import the AdminCalendarScreen
 
-class SelectEmployeeScreen extends StatefulWidget {
-  const SelectEmployeeScreen({Key? key}) : super(key: key);
+// class SelectedEmployeeScreen extends StatefulWidget {
+//   final UserModel employee;
 
-  @override
-  State<SelectEmployeeScreen> createState() => _SelectEmployeeScreenState();
-}
+//   const SelectedEmployeeScreen({Key? key, required this.employee}) : super(key: key);
 
-class _SelectEmployeeScreenState extends State<SelectEmployeeScreen> {
-  final SupabaseClient supabase = Supabase.instance.client;
+//   @override
+//   _SelectedEmployeeScreenState createState() => _SelectedEmployeeScreenState();
+// }
 
-  // Method to fetch employee data
-  Future<List<Map<String, dynamic>>> _fetchEmployees() async {
-    final snapshot = await supabase
-        .from('employees') // Specify the table you want to fetch data from
-        .select('*') // Select all columns
-        ; // Executes the request to Supabase
+// class _SelectedEmployeeScreenState extends State<SelectedEmployeeScreen> {
+//   late String selectedMonth;
+//   late AttendanceService attendanceService;
 
-    if (snapshot.isNotEmpty) {
-      return List<Map<String, dynamic>>.from(snapshot);
-    } else {
-      throw Exception('Failed to load employees');
-    }
-  }
+//   @override
+//   void initState() {
+//     super.initState();
+//     selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+//     attendanceService = Provider.of<AttendanceService>(context, listen: false);
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Employee'),
-        backgroundColor: Colors.blueGrey,
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchEmployees(), // Fetch employee data
-        builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(), // Show loading spinner
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}', // Show error if it occurs
-                style: const TextStyle(fontSize: 18),
-              ),
-            );
-          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            // If data is available, display the employee names as buttons
-            final employees = snapshot.data!;
-            return ListView.builder(
-              itemCount: employees.length,
-              itemBuilder: (context, index) {
-                final employee = employees[index];
-                final employeeName = employee['name'];
-                final employeeId = employee['id'];
+//   Future<void> _selectMonth() async {
+//     final DateTime? pickedDate = await SimpleMonthYearPicker.showMonthYearPickerDialog(
+//       context: context,
+//       disableFuture: true,
+//     );
+//     if (pickedDate != null) {
+//       setState(() {
+//         selectedMonth = DateFormat('MMMM yyyy').format(pickedDate);
+//       });
+//     }
+//   }
 
-                return ListTile(
-                  title: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to the AdminCalendarScreen with the selected employee's data
-                      Navigator.pushNamed(
-                        context,
-                        '/adminCalendar',
-                        arguments: {
-                          'employeeId': employeeId,
-                          'employeeName': employeeName,
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey, // Button color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: Text(
-                      employeeName,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                );
-              },
-            );
-          } else {
-            // If no data, display a message
-            return const Center(
-              child: Text(
-                "No employees found",
-                style: TextStyle(fontSize: 18),
-              ),
-            );
-          }
-        },
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Attendance for ${widget.employee.name}'),
+//         backgroundColor: Colors.blueGrey,
+//       ),
+//       body: Column(
+//         children: [
+//           Padding(
+//             padding: const EdgeInsets.all(16.0),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Text(
+//                   selectedMonth,
+//                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//                 ),
+//                 OutlinedButton(
+//                   onPressed: _selectMonth,
+//                   child: const Text("Select Month"),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           Expanded(
+//             child: FutureBuilder<List<AttendanceModel>>(
+//               future: attendanceService.getAttendanceForEmployee(widget.employee.id, selectedMonth),
+//               builder: (context, snapshot) {
+//                 if (snapshot.connectionState == ConnectionState.waiting) {
+//                   return const Center(child: CircularProgressIndicator());
+//                 } else if (snapshot.hasError) {
+//                   return Center(child: Text("Error: ${snapshot.error}"));
+//                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+//                   return const Center(
+//                     child: Text("No attendance data for this month."),
+//                   );
+//                 }
+
+//                 final attendanceData = snapshot.data!;
+//                 return ListView.builder(
+//                   itemCount: attendanceData.length,
+//                   itemBuilder: (context, index) {
+//                     final attendance = attendanceData[index];
+//                     return ListTile(
+//                       title: Text(DateFormat("EE, MMM dd").format(attendance.createdAt)),
+//                       subtitle: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text("Check In: ${attendance.checkIn ?? '--/--'}"),
+//                           Text("Check Out: ${attendance.checkOut ?? '--/--'}"),
+//                         ],
+//                       ),
+//                     );
+//                   },
+//                 );
+//               },
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

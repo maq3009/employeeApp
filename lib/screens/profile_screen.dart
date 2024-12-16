@@ -40,6 +40,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  alignment: Alignment.topRight,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Provider.of<AuthService>(context, listen: false).signOut();
+                    }, icon: const Icon(Icons.logout), label: const Text("Sign Out")),
+                  ),
+                Container(
                   margin: const EdgeInsets.only(top: 80),
                   height: 100,
                   width: 100,

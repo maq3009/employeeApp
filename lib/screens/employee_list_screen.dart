@@ -1,63 +1,53 @@
-import 'package:flutter/material.dart';
-import 'package:employee_attendance/models/user_model.dart';
-import 'package:employee_attendance/services/db_service.dart';
-import 'package:employee_attendance/screens/admin_calendar_screen.dart';
-import 'package:provider/provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:employee_attendance/services/attendance_service.dart';
+// import 'admin_calendar_screen.dart';
 
-class EmployeeListScreen extends StatefulWidget {
-  const EmployeeListScreen({Key? key}) : super(key: key);
+// class EmployeeListScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     final attendanceService = Provider.of<AttendanceService>(context);
 
-  @override
-  State<EmployeeListScreen> createState() => _EmployeeListScreenState();
-}
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('Employee List'),
+//         backgroundColor: Colors.blueGrey,
+//       ),
+//       body: FutureBuilder<List<Map<String, dynamic>>>(
+//         future: attendanceService.getAllEmployees(), // Fetch employees from database
+//         builder: (context, snapshot) {
+//           if (snapshot.connectionState == ConnectionState.waiting) {
+//             return const Center(child: CircularProgressIndicator());
+//           } else if (snapshot.hasError) {
+//             return Center(child: Text("Error: ${snapshot.error}"));
+//           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+//             return const Center(child: Text("No employees found."));
+//           }
 
-class _EmployeeListScreenState extends State<EmployeeListScreen> {
-  List<UserModel> employees = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchEmployees();
-  }
-
-  Future<void> fetchEmployees() async {
-    final dbService = Provider.of<DbService>(context, listen: false);
-    final fetchedEmployees = await dbService.getAllEmployees();
-    setState(() {
-      employees = fetchedEmployees;
-      isLoading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Employee List"),
-        backgroundColor: Colors.blueGrey,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: employees.length,
-              itemBuilder: (context, index) {
-                final employee = employees[index];
-                return ListTile(
-                  title: Text(employee.employeeId),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AdminCalendarScreen(
-                          employeeId: employee.employeeId,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-    );
-  }
-}
+//           final employees = snapshot.data!;
+//           return ListView.builder(
+//             itemCount: employees.length,
+//             itemBuilder: (context, index) {
+//               final employee = employees[index];
+//               return ListTile(
+//                 title: Text(employee['employeeName']),
+//                 trailing: const Icon(Icons.calendar_today),
+//                 onTap: () {
+//                   Navigator.push(
+//                     context,
+//                     MaterialPageRoute(
+//                       builder: (context) => AdminCalendarScreen(
+//                         employeeId: employee['employeeId'],
+//                         arguments: {'employeeName': employee['employeeName']},
+//                       ),
+//                     ),
+//                   );
+//                 },
+//               );
+//             },
+//           );
+//         },
+//       ),
+//     );
+//   }
+// }
