@@ -17,6 +17,10 @@ class AttendanceService extends ChangeNotifier {
   String todayDate = DateFormat("dd MMMM yyyy").format(DateTime.now());
   bool _isLoading = false;
 
+  get currentUserId {
+  return Supabase.instance.client.auth.currentUser?.id;
+}
+
   bool get isLoading => _isLoading;
 
   set setIsLoading(bool value) {

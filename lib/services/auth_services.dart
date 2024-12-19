@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:employee_attendance/services/db_service.dart';
 import 'package:employee_attendance/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +21,7 @@ class AuthService extends ChangeNotifier {
   AuthService() {
     _authStateController = StreamController<User?>();
     _supabase.auth.onAuthStateChange.listen((authState) {
-      //Access the user information through the session property
+      // Access the user information through the session property
       final user = authState.session?.user;
       _authStateController.add(user);
     });
@@ -32,13 +31,10 @@ class AuthService extends ChangeNotifier {
     return _authStateController.stream;
   }
 
-
-
-
   /// Registers a new employee
   Future<void> registerEmployee(
-    String email, 
-    String password, 
+    String email,
+    String password,
     BuildContext context,
   ) async {
     try {
@@ -48,27 +44,26 @@ class AuthService extends ChangeNotifier {
         throw Exception("Todos los campos son requeridos");
       }
 
-      final AuthResponse response = 
-        await _supabase.auth.signUp(
-          email: email,
-          password: password,
+      final AuthResponse response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
       );
-      await _dbService.insertNewUser(email, response.user!.id); 
-      Utils.showSnackBar("Exito ! Ahora puede entrar a la aplicacion", context, 
-        color: Colors.green);
+
+      await _dbService.insertNewUser(email, response.user!.id);
+      Utils.showSnackBar("¡Registro exitoso! Ahora puede iniciar sesión.", context,
+          color: Colors.green);
       await loginEmployee(email, password, context);
       Navigator.pop(context);
-
-        } catch (e) {
+    } catch (e) {
       setIsLoading = false;
       Utils.showSnackBar(e.toString(), context, color: Colors.red);
     }
   }
 
-  /// Logs in an employee
+  /// Logs in a regular user
   Future<void> loginEmployee(
-    String email, 
-    String password, 
+    String email,
+    String password,
     BuildContext context,
   ) async {
     try {
@@ -78,32 +73,77 @@ class AuthService extends ChangeNotifier {
         throw Exception("Todos los campos son requeridos");
       }
 
-      await _supabase.auth.signInWithPassword(
+      final response = await _supabase.auth.signInWithPassword(
         email: email,
-        password: password,);
+        password: password,
+      );
+
+      if (response.user != null) {
+        // Check if user is an admin
+        final userRoleResponse = await _supabase
+            .from('employees') // Replace 'employees' with your user role table
+            .select('role')
+            .eq('id', response.user!.id)
+            .single();
+
+        final role = userRoleResponse['role'];
+        if (role == 'admin') {
+          throw Exception("Unauthorized: Admins must use the admin login.");
+        }
+
         setIsLoading = false;
-        } catch (e) {
-        setIsLoading = false;
-        Utils.showSnackBar(e.toString(), context, color: Colors.red
-        );}
+      } else {
+        throw Exception("Login failed: Invalid credentials.");
+      }
+    } catch (e) {
+      setIsLoading = false;
+      Utils.showSnackBar(e.toString(), context, color: Colors.red);
+    }
   }
+
+  /// Logs in an admin
+  Future<bool> loginAdmin(
+    String email,
+    String password,
+  ) async {
+    try {
+      setIsLoading = true;
+
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
+        // Verify admin role
+        final userRoleResponse = await _supabase
+            .from('employees') // Replace 'employees' with your user role table
+            .select('role')
+            .eq('id', response.user!.id)
+            .single();
+
+        final role = userRoleResponse['role'];
+        if (role != 'admin') {
+          throw Exception("Unauthorized: Only admins can log in here.");
+        }
+
+        setIsLoading = false;
+        return true;
+      } else {
+        throw Exception("Login failed: Invalid credentials.");
+      }
+    } catch (e) {
+      setIsLoading = false;
+      debugPrint("Admin login failed: $e");
+      return false;
+    }
+  }
+
   /// Logs out the current user
   Future<void> signOut() async {
     await _supabase.auth.signOut();
     notifyListeners();
   }
-
-  Future<bool> loginAdmin(String email, String password) async {
-    try {
-      final response = await _supabase.auth.signInWithPassword(email: email, password: password);
-      return response.session != null; // Success if a session exists
-    } catch (e) {
-      debugPrint("Login failed: $e");
-      return false;
-    }
-  }
-
-
 
   /// Returns the currently signed-in user
   User? get currentUser => _supabase.auth.currentUser;
@@ -114,7 +154,3 @@ class AuthService extends ChangeNotifier {
     super.dispose();
   }
 }
-
-
-
-

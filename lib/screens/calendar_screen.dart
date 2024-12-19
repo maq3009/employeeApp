@@ -1,174 +1,108 @@
-import 'package:employee_attendance/models/attendance_model.dart';
 import 'package:employee_attendance/services/attendance_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:simple_month_year_picker/simple_month_year_picker.dart';
+import 'package:employee_attendance/models/attendance_model.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  const CalendarScreen({Key? key}) : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
+  late String selectedMonthUI; // For UI display: 'MMMM yyyy'
+  late String selectedMonthService; // For service calls: 'yyyy-MM'
+  late AttendanceService attendanceService;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    selectedMonthUI = DateFormat('MMMM yyyy').format(now);
+    selectedMonthService = DateFormat('yyyy-MM').format(now);
+    attendanceService = Provider.of<AttendanceService>(context, listen: false);
+  }
+
+  Future<void> _selectMonth() async {
+    final DateTime? pickedDate = await SimpleMonthYearPicker.showMonthYearPickerDialog(
+      context: context,
+      disableFuture: true,
+    );
+    if (pickedDate != null) {
+      setState(() {
+        selectedMonthUI = DateFormat('MMMM yyyy').format(pickedDate);
+        selectedMonthService = DateFormat('yyyy-MM').format(pickedDate);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final attendanceService = Provider.of<AttendanceService>(context);
-
-    return Column(
-      children: [
-        Container(
-          alignment: Alignment.centerLeft,
-          margin: const EdgeInsets.only(left: 20, top: 60, bottom: 10),
-          
-          child: const Center(
-            child: Text(
-              "Mi Atendencia",
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                fontFamily: "cursive"
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("My Attendance"),
+        backgroundColor: Colors.blueGrey,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  selectedMonthUI, // Display in 'MMMM yyyy'
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
+                OutlinedButton(
+                  onPressed: _selectMonth,
+                  child: const Text("Select Month"),
+                ),
+              ],
             ),
           ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              attendanceService.attendanceHistoryMonth,
-              style: const TextStyle(fontSize: 25),
-            ),
-            OutlinedButton(
-              onPressed: () async {
-                final selectedDate =
-                    await SimpleMonthYearPicker.showMonthYearPickerDialog(
-                        context: context, disableFuture: true);
-                String pickedMonth =
-                    DateFormat('MMMM yyyy').format(selectedDate);
-                attendanceService.attendanceHistoryMonth = pickedMonth;
-                            },
-              child: const Text("Escoge un Mes"),
-            ),
-          ],
-        ),
-        Expanded(
-          child: FutureBuilder(
-            future: attendanceService.getAttendanceHistory(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const LinearProgressIndicator(
-                  backgroundColor: Colors.white,
-                  color: Colors.blueGrey,
-                );
-              } else if (snapshot.hasData && snapshot.data.isNotEmpty) {
+          Expanded(
+            child: FutureBuilder<List<AttendanceModel>>(
+              future: attendanceService.getAttendanceForEmployee(
+                attendanceService.currentUserId,
+                selectedMonthService,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text("No attendance data for this month."),
+                  );
+                }
+
+                final attendanceData = snapshot.data!;
                 return ListView.builder(
-                  itemCount: snapshot.data.length,
+                  itemCount: attendanceData.length,
                   itemBuilder: (context, index) {
-                    AttendanceModel attendanceData = snapshot.data[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 20),
-                      height: 150,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black,
-                            blurRadius: 10,
-                            offset: Offset(2, 2),
-                          )
-                        ],
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                    final attendance = attendanceData[index];
+                    return ListTile(
+                      title: Text(DateFormat("EE, MMM dd").format(attendance.createdAt)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.blueGrey,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(20)),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  DateFormat("EE \n dd")
-                                      .format(attendanceData.createdAt),
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(    //Check IN
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Check In",
-                                  style: TextStyle(
-                                      fontSize: 20, color: Colors.black54),
-                                ),
-                                const SizedBox(width: 80),
-                                const Divider(),
-                                Text(
-                                  attendanceData.checkIn,
-                                  style: const TextStyle(
-                                    fontSize: 25,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(   //Check Out
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Check Out",
-                                  style: TextStyle(
-                                      fontSize: 20, color: Colors.black54),
-                                ),
-                                const SizedBox(width: 80),
-                                const Divider(),
-                                Text(
-                                  attendanceData.checkOut?.toString() ??
-                                      '--/--',
-                                  style: const TextStyle(
-                                    fontSize: 25,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 15),
+                          Text("Check In: ${attendance.checkIn}"),
+                          Text("Check Out: ${attendance.checkOut ?? '--/--'}"),
                         ],
                       ),
                     );
                   },
                 );
-              } else {
-                return const Center(
-                  child: Text(
-                    "No data Available",
-                    style: TextStyle(fontSize: 25),
-                  ),
-                );
-              }
-            },
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
