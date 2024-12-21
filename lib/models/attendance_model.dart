@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class AttendanceModel {
   final String id;
   final String date;
@@ -6,6 +8,8 @@ class AttendanceModel {
   final DateTime createdAt;
   final Map? checkInLocation;
   final Map? checkOutLocation;
+  final String? breakIn;
+  final String? breakOut;
 
   AttendanceModel({
     required this.id,
@@ -15,9 +19,26 @@ class AttendanceModel {
     required this.createdAt,
     this.checkInLocation,
     this.checkOutLocation,
+    this.breakIn,
+    this.breakOut,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> data) {
+    final rawBreakIn = data['break_in'] as String?;
+    String? formattedBreakIn;
+
+    if (rawBreakIn != null) {
+      try {
+        // Attempt to parse the rawBreakIn as a DateTime
+        final dt = DateTime.parse(rawBreakIn);
+        // If successful, format it to HH:mm
+        formattedBreakIn = DateFormat('HH:mm').format(dt);
+      } catch (e) {
+        // If parsing fails, keep it as is
+        formattedBreakIn = rawBreakIn;
+      }
+    }
+
     return AttendanceModel(
       id: data['employee_id'],
       date: data['date'],
@@ -26,7 +47,8 @@ class AttendanceModel {
       createdAt: DateTime.parse(data['created_at'] as String),
       checkInLocation: data['check_in_location'],
       checkOutLocation: data['check_out_location'],
-    
+      breakIn: formattedBreakIn,
+      breakOut: data['break_out'] as String?,
     );
   }
 }

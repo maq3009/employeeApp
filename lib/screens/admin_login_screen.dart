@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:employee_attendance/services/auth_services.dart';
 import 'package:employee_attendance/screens/admin_home_screen.dart';
+import 'package:employee_attendance/screens/login_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({Key? key}) : super(key: key);
@@ -47,28 +48,51 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               builder: (context, authService, _) {
                 return authService.isLoading
                     ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: () async {
-                          final success = await authService.loginAdmin(
-                            _emailController.text.trim(),
-                            _passwordController.text.trim(),
-                          );
-                          if (success) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AdminHomeScreen(),
+                    : Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              final success = await authService.loginAdmin(
+                                _emailController.text.trim(),
+                                _passwordController.text.trim(),
+                              );
+                              if (success) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AdminHomeScreen(),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Invalid login credentials"),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text("Log In"),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Return to Regular Log In",
+                              style: TextStyle(
+                                color: Colors.blueGrey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Invalid login credentials"),
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text("Log In"),
+                            ),
+                          ),
+                        ],
                       );
               },
             ),

@@ -15,6 +15,7 @@ class AttendanceScreen extends StatefulWidget {
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
   final GlobalKey<SlideActionState> sliderKey = GlobalKey<SlideActionState>();
+  final GlobalKey<SlideActionState> breakSliderKey = GlobalKey<SlideActionState>();
 
   @override
   void initState() {
@@ -22,6 +23,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AttendanceService>(context, listen: false).getTodayAttendance();
     });
+  }
+
+  String formatBreakIn(String? breakIn) {
+    if (breakIn == null || breakIn == '--/--') return '--/--';
+    // Try parsing as DateTime
+    try {
+      final dt = DateTime.parse(breakIn).toLocal();
+      return DateFormat('HH:mm').format(dt);
+    } catch (_) {
+      // If parsing fails, assume it's already in HH:mm format
+      return breakIn;
+    }
   }
 
   @override
@@ -50,11 +63,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     if (snapshot.hasData) {
                       UserModel user = snapshot.data!;
                       return Container(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          user.name.isNotEmpty ? user.name : "#${user.employeeId}",
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                      ));
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            user.name.isNotEmpty ? user.name : "#${user.employeeId}",
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                          ));
                     }
                     return const LinearProgressIndicator();
                   },
@@ -123,6 +136,60 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
             ),
 
+            // Break In/Break Out display
+            if (attendanceService.attendanceModel?.checkIn != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 32),
+                height: 150,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(2, 2)),
+                  ],
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Break In
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Break In",
+                            style: TextStyle(fontSize: 20, color: Colors.black54),
+                          ),
+                          const Divider(),
+                          Text(
+                            formatBreakIn(attendanceService.attendanceModel?.breakIn),
+                            style: const TextStyle(fontSize: 25),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Break Out
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Break Out",
+                            style: TextStyle(fontSize: 20, color: Colors.black54),
+                          ),
+                          const Divider(),
+                          Text(
+                            attendanceService.attendanceModel?.breakOut ?? '--/--',
+                            style: const TextStyle(fontSize: 25),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Date and Time
             Container(
               alignment: Alignment.centerLeft,
@@ -157,11 +224,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 key: sliderKey,
                 onSubmit: () async {
                   await attendanceService.markAttendance(context);
-                  setState(() {}); // Trigger a rebuild
-                  sliderKey.currentState?.reset(); // Reset the slider
+                  setState(() {});
+                  sliderKey.currentState?.reset();
                 },
               ),
             ),
+
+            // Slide to Start/End Break
+            if (attendanceService.attendanceModel?.checkIn != null &&
+                attendanceService.attendanceModel?.checkOut == null)
+              Container(
+                margin: const EdgeInsets.only(top: 25),
+                child: SlideAction(
+                  text: attendanceService.isOnBreak
+                      ? "Slide to End Break"
+                      : "Slide to Start Break",
+                  textStyle: const TextStyle(color: Colors.black54, fontSize: 18),
+                  outerColor: Colors.white,
+                  innerColor: attendanceService.isOnBreak ? Colors.redAccent : Colors.greenAccent,
+                  key: breakSliderKey,
+                  onSubmit: () async {
+                    if (attendanceService.isOnBreak) {
+                      await attendanceService.endBreak(context);
+                    } else {
+                      await attendanceService.startBreak(context);
+                    }
+                    setState(() {});
+                    breakSliderKey.currentState?.reset();
+                  },
+                ),
+              ),
           ],
         ),
       ),

@@ -18,8 +18,8 @@ class AttendanceService extends ChangeNotifier {
   bool _isLoading = false;
 
   get currentUserId {
-  return Supabase.instance.client.auth.currentUser?.id;
-}
+    return Supabase.instance.client.auth.currentUser?.id;
+  }
 
   bool get isLoading => _isLoading;
 
@@ -63,6 +63,7 @@ class AttendanceService extends ChangeNotifier {
         .select()
         .eq('employee_id', _supabase.auth.currentUser!.id)
         .eq('date', todayDate);
+
     if (result.isNotEmpty) {
       attendanceModel = AttendanceModel.fromJson(result.first);
     }
@@ -87,52 +88,41 @@ class AttendanceService extends ChangeNotifier {
     return List<Map<String, dynamic>>.from(result);
   }
 
-Future<List<UserModel>> getEmployees() async {
-  final url = Uri.parse('https://yourapiurl.com/employees');
-  try {
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      print('Employees data: $data');  // Debugging line
-      return data.map((item) => UserModel.fromJson(item)).toList();
-    } else {
-      throw Exception('Failed to load employees');
+  Future<List<UserModel>> getEmployees() async {
+    final url = Uri.parse('https://yourapiurl.com/employees');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print('Employees data: $data');  // Debugging line
+        return data.map((item) => UserModel.fromJson(item)).toList();
+      } else {
+        throw Exception('Failed to load employees');
+      }
+    } catch (e) {
+      throw Exception('Error fetching employees: $e');
     }
-  } catch (e) {
-    throw Exception('Error fetching employees: $e');
   }
-}
 
+  Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String month) async {
+    try {
+      final DateTime parsedMonth = DateFormat('yyyy-MM').parse(month);
+      final String monthYear = DateFormat('MMMM yyyy').format(parsedMonth);
 
-Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String month) async {
-  try {
-    // Extract the month and year in the correct format
-    final DateTime parsedMonth = DateFormat('yyyy-MM').parse(month);
-    final String monthYear = DateFormat('MMMM yyyy').format(parsedMonth); // e.g., "December 2024"
+      final result = await _supabase
+          .from(Constants.attendanceTable)
+          .select()
+          .eq('employee_id', employeeId)
+          .like('date', '%$monthYear%')
+          .order('created_at', ascending: true);
 
-    // Query Supabase
-    final result = await _supabase
-        .from(Constants.attendanceTable)
-        .select()
-        .eq('employee_id', employeeId) // Match employee_id
-        .like('date', '%$monthYear%') // Match dates ending with "MMMM yyyy"
-        .order('created_at', ascending: true);
-
-    // Convert result to a list of AttendanceModel
-    return List<Map<String, dynamic>>.from(result).map((data) {
-      return AttendanceModel.fromJson(data);
-    }).toList();
-  } catch (e) {
-    throw Exception('Error fetching attendance data: $e');
+      return List<Map<String, dynamic>>.from(result).map((data) {
+        return AttendanceModel.fromJson(data);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error fetching attendance data: $e');
+    }
   }
-}
-
-
-
-
-
-
-
 
   Future markAttendance(BuildContext context) async {
     DateTime now = DateTime.now();
@@ -155,7 +145,7 @@ Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String
         }
       } else if (attendanceModel?.checkOut == null) {
         if (now.isBefore(checkOutLimit)) {
-          Utils.showSnackBar("It is too early to check out, Try after 04:30 PM", context);
+          Utils.showSnackBar("It is too early to check out, Try after 11:30 PM", context);
           return;
         } else {
           await _supabase
@@ -170,10 +160,91 @@ Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String
       } else {
         Utils.showSnackBar("You have already checked out today!", context);
       }
-      getTodayAttendance();
+      await getTodayAttendance();
     } else {
       Utils.showSnackBar("Location not accessible at the moment, please try again later", context, color: Colors.redAccent);
-      getTodayAttendance();
+      await getTodayAttendance();
+    }
+  }
+
+  bool get isOnBreak {
+    return attendanceModel?.breakIn != null && attendanceModel?.breakOut == null;
+  }
+
+  Future<void> startBreak(BuildContext context) async {
+    if (attendanceModel == null) return;
+
+    try {
+      if (attendanceModel?.checkIn != null && attendanceModel?.checkOut == null) {
+        if (!isOnBreak) {
+          final breakInTime = DateFormat('HH:mm').format(DateTime.now()); 
+          final response = await _supabase.from(Constants.attendanceTable)
+              .update({
+                'break_in': breakInTime,
+                'break_out': null,
+              })
+              .eq('employee_id', _supabase.auth.currentUser!.id)
+              .eq('date', todayDate);
+
+          if (response.error != null) throw response.error!;
+
+          attendanceModel = AttendanceModel(
+            id: attendanceModel!.id,
+            date: attendanceModel!.date,
+            checkIn: attendanceModel!.checkIn,
+            checkOut: attendanceModel!.checkOut,
+            createdAt: attendanceModel!.createdAt,
+            checkInLocation: attendanceModel!.checkInLocation,
+            checkOutLocation: attendanceModel!.checkOutLocation,
+            breakIn: breakInTime,
+            breakOut: null,
+          );
+
+          notifyListeners();
+        } else {
+          Utils.showSnackBar("You are already on a break!", context);
+        }
+      } else {
+        Utils.showSnackBar("You can only start a break after checking in and before checking out.", context);
+      }
+    } catch (e) {
+      Utils.showSnackBar("Failed to start break. Please try again.", context);
+    }
+  }
+
+  Future<void> endBreak(BuildContext context) async {
+    if (attendanceModel == null) return;
+
+    try {
+      if (isOnBreak) {
+        final breakOutTime = DateFormat('HH:mm').format(DateTime.now());
+        final response = await _supabase.from(Constants.attendanceTable)
+            .update({
+              'break_out': breakOutTime,
+            })
+            .eq('employee_id', _supabase.auth.currentUser!.id)
+            .eq('date', todayDate);
+
+        if (response.error != null) throw response.error!;
+
+        attendanceModel = AttendanceModel(
+          id: attendanceModel!.id,
+          date: attendanceModel!.date,
+          checkIn: attendanceModel!.checkIn,
+          checkOut: attendanceModel!.checkOut,
+          createdAt: attendanceModel!.createdAt,
+          checkInLocation: attendanceModel!.checkInLocation,
+          checkOutLocation: attendanceModel!.checkOutLocation,
+          breakIn: attendanceModel!.breakIn,
+          breakOut: breakOutTime,
+        );
+
+        notifyListeners();
+      } else {
+        Utils.showSnackBar("You are not currently on a break!", context);
+      }
+    } catch (e) {
+      Utils.showSnackBar("Failed to end break. Please try again.", context);
     }
   }
 }
