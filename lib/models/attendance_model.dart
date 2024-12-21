@@ -29,12 +29,9 @@ class AttendanceModel {
 
     if (rawBreakIn != null) {
       try {
-        // Attempt to parse the rawBreakIn as a DateTime
         final dt = DateTime.parse(rawBreakIn);
-        // If successful, format it to HH:mm
         formattedBreakIn = DateFormat('HH:mm').format(dt);
       } catch (e) {
-        // If parsing fails, keep it as is
         formattedBreakIn = rawBreakIn;
       }
     }
@@ -49,6 +46,30 @@ class AttendanceModel {
       checkOutLocation: data['check_out_location'],
       breakIn: formattedBreakIn,
       breakOut: data['break_out'] as String?,
+    );
+  }
+
+  AttendanceModel copyWith({
+    String? id,
+    String? date,
+    String? checkIn,
+    String? checkOut,
+    DateTime? createdAt,
+    Map? checkInLocation,
+    Map? checkOutLocation,
+    String? breakIn,
+    String? breakOut,
+  }) {
+    return AttendanceModel(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      checkIn: checkIn ?? this.checkIn,
+      checkOut: checkOut ?? this.checkOut,
+      createdAt: createdAt ?? this.createdAt,
+      checkInLocation: checkInLocation ?? this.checkInLocation,
+      checkOutLocation: checkOutLocation ?? this.checkOutLocation,
+      breakIn: breakIn ?? this.breakIn,
+      breakOut: breakOut ?? this.breakOut,
     );
   }
 }

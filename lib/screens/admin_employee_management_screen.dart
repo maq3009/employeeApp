@@ -20,12 +20,12 @@ class _AdminEmployeeScreenState extends State<AdminEmployeeScreen> {
     dbService = Provider.of<DbService>(context, listen: false);
   }
 
-  Future<void> _deleteEmployee(String employeeId, String employeeName) async {
+  Future<void> _deleteEmployee(UserModel employee) async {
     final confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Employee"),
-        content: Text("Are you sure you want to delete $employeeName?"),
+        content: Text("Are you sure you want to delete ${employee.name}?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -41,14 +41,14 @@ class _AdminEmployeeScreenState extends State<AdminEmployeeScreen> {
 
     if (confirm == true) {
       try {
-        await dbService.deleteEmployee(employeeId);
+        await dbService.deleteEmployee(employee);
         setState(() {}); // Refresh the list after deletion
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Employee $employeeName has been deleted.")),
+          SnackBar(content: Text("Employee ${employee.name} has been deleted.")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to delete $employeeName: $e")),
+          SnackBar(content: Text("Failed to delete ${employee.name}: $e")),
         );
       }
     }
@@ -141,7 +141,7 @@ class _AdminEmployeeScreenState extends State<AdminEmployeeScreen> {
                     subtitle: Text("ID: ${employee.employeeId}"),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteEmployee(employee.id, employee.name),
+                      onPressed: () => _deleteEmployee(employee),
                     ),
                   ),
                 );

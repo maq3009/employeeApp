@@ -25,15 +25,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
-  String formatBreakIn(String? breakIn) {
-    if (breakIn == null || breakIn == '--/--') return '--/--';
-    // Try parsing as DateTime
+  String formatBreakTime(String? time) {
+    if (time == null || time == '--/--') return '--/--';
     try {
-      final dt = DateTime.parse(breakIn).toLocal();
+      final dt = DateTime.parse(time).toLocal();
       return DateFormat('HH:mm').format(dt);
     } catch (_) {
-      // If parsing fails, assume it's already in HH:mm format
-      return breakIn;
+      return time;
     }
   }
 
@@ -63,11 +61,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     if (snapshot.hasData) {
                       UserModel user = snapshot.data!;
                       return Container(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            user.name.isNotEmpty ? user.name : "#${user.employeeId}",
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                          ));
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          user.name.isNotEmpty ? user.name : "#${user.employeeId}",
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                        ),
+                      );
                     }
                     return const LinearProgressIndicator();
                   },
@@ -96,7 +95,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Check In
                   Expanded(
@@ -136,7 +134,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
             ),
 
-            // Break In/Break Out display
+            // Break In/Out Times
             if (attendanceService.attendanceModel?.checkIn != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 32),
@@ -150,7 +148,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Break In
                     Expanded(
@@ -163,7 +160,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                           const Divider(),
                           Text(
-                            formatBreakIn(attendanceService.attendanceModel?.breakIn),
+                            formatBreakTime(attendanceService.attendanceModel?.breakIn),
                             style: const TextStyle(fontSize: 25),
                           ),
                         ],
@@ -180,7 +177,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                           const Divider(),
                           Text(
-                            attendanceService.attendanceModel?.breakOut ?? '--/--',
+                            formatBreakTime(attendanceService.attendanceModel?.breakOut),
                             style: const TextStyle(fontSize: 25),
                           ),
                         ],
@@ -189,27 +186,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ],
                 ),
               ),
-
-            // Date and Time
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                DateFormat("dd-MMMM-yyyy").format(DateTime.now()),
-                style: const TextStyle(fontSize: 20),
-              ),
-            ),
-            StreamBuilder(
-              stream: Stream.periodic(const Duration(seconds: 1)),
-              builder: (context, snapshot) {
-                return Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    DateFormat("hh:mm:ss a").format(DateTime.now()),
-                    style: const TextStyle(fontSize: 15, color: Colors.black54),
-                  ),
-                );
-              },
-            ),
 
             // Slide to Check In/Out
             Container(

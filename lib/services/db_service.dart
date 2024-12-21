@@ -46,24 +46,15 @@ class DbService extends ChangeNotifier {
     return userModel!;
   } 
 
-  Future<void> deleteEmployee(String employeeId) async {
-  try {
-    // Delete all attendance records for the employee
-    await _supabase.from('attendance').delete().eq('employee_id', employeeId);
-
-    // Delete the employee record
-    final response = await _supabase.from('employees').delete().eq('id', employeeId);
-
-    if (response.error != null) {
-      throw Exception('Failed to delete employee: ${response.error!.message}');
+  Future<void> deleteEmployee(UserModel employee) async {
+    try {
+      await _supabase.from('attendance').delete().eq('employee_id', employee.id);
+      await _supabase.from('employees').delete().eq('id', employee.id);
+    } catch (e) {
+      throw Exception('Failed to delete employee: $e');
     }
-
-    debugPrint("Employee with ID $employeeId deleted successfully.");
-  } catch (e) {
-    debugPrint("Error deleting employee: $e");
-    throw Exception("Failed to delete employee.");
   }
-}
+
 
 
   Future<void> getAllDepartments() async {

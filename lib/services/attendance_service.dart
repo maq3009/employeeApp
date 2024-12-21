@@ -6,8 +6,7 @@ import 'package:employee_attendance/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 
 class AttendanceService extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -83,27 +82,6 @@ class AttendanceService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<Map<String, dynamic>>> getAllEmployees() async {
-    final result = await _supabase.from('employees').select();
-    return List<Map<String, dynamic>>.from(result);
-  }
-
-  Future<List<UserModel>> getEmployees() async {
-    final url = Uri.parse('https://yourapiurl.com/employees');
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        print('Employees data: $data');  // Debugging line
-        return data.map((item) => UserModel.fromJson(item)).toList();
-      } else {
-        throw Exception('Failed to load employees');
-      }
-    } catch (e) {
-      throw Exception('Error fetching employees: $e');
-    }
-  }
-
   Future<List<AttendanceModel>> getAttendanceForEmployee(String employeeId, String month) async {
     try {
       final DateTime parsedMonth = DateFormat('yyyy-MM').parse(month);
@@ -162,7 +140,8 @@ class AttendanceService extends ChangeNotifier {
       }
       await getTodayAttendance();
     } else {
-      Utils.showSnackBar("Location not accessible at the moment, please try again later", context, color: Colors.redAccent);
+      Utils.showSnackBar("Location not accessible at the moment, please try again later", context,
+          color: Colors.redAccent);
       await getTodayAttendance();
     }
   }
@@ -177,38 +156,22 @@ class AttendanceService extends ChangeNotifier {
     try {
       if (attendanceModel?.checkIn != null && attendanceModel?.checkOut == null) {
         if (!isOnBreak) {
-          final breakInTime = DateFormat('HH:mm').format(DateTime.now()); 
-          final response = await _supabase.from(Constants.attendanceTable)
-              .update({
-                'break_in': breakInTime,
-                'break_out': null,
-              })
-              .eq('employee_id', _supabase.auth.currentUser!.id)
-              .eq('date', todayDate);
+          final breakInTime = DateFormat('HH:mm').format(DateTime.now());
+          await _supabase
+              .from(Constants.attendanceTable)
+              .update({'break_in': breakInTime}).eq('employee_id', currentUserId).eq('date', todayDate);
 
-          if (response.error != null) throw response.error!;
-
-          attendanceModel = AttendanceModel(
-            id: attendanceModel!.id,
-            date: attendanceModel!.date,
-            checkIn: attendanceModel!.checkIn,
-            checkOut: attendanceModel!.checkOut,
-            createdAt: attendanceModel!.createdAt,
-            checkInLocation: attendanceModel!.checkInLocation,
-            checkOutLocation: attendanceModel!.checkOutLocation,
-            breakIn: breakInTime,
-            breakOut: null,
-          );
-
+          attendanceModel = attendanceModel!.copyWith(breakIn: breakInTime, breakOut: null);
           notifyListeners();
+          Utils.showSnackBar("Break started successfully!", context, color: Colors.green);
         } else {
           Utils.showSnackBar("You are already on a break!", context);
         }
       } else {
-        Utils.showSnackBar("You can only start a break after checking in and before checking out.", context);
+        Utils.showSnackBar("Invalid break action.", context);
       }
     } catch (e) {
-      Utils.showSnackBar("Failed to start break. Please try again.", context);
+      Utils.showSnackBar("Failed to start break: $e", context, color: Colors.red);
     }
   }
 
@@ -218,33 +181,18 @@ class AttendanceService extends ChangeNotifier {
     try {
       if (isOnBreak) {
         final breakOutTime = DateFormat('HH:mm').format(DateTime.now());
-        final response = await _supabase.from(Constants.attendanceTable)
-            .update({
-              'break_out': breakOutTime,
-            })
-            .eq('employee_id', _supabase.auth.currentUser!.id)
-            .eq('date', todayDate);
+        await _supabase
+            .from(Constants.attendanceTable)
+            .update({'break_out': breakOutTime}).eq('employee_id', currentUserId).eq('date', todayDate);
 
-        if (response.error != null) throw response.error!;
-
-        attendanceModel = AttendanceModel(
-          id: attendanceModel!.id,
-          date: attendanceModel!.date,
-          checkIn: attendanceModel!.checkIn,
-          checkOut: attendanceModel!.checkOut,
-          createdAt: attendanceModel!.createdAt,
-          checkInLocation: attendanceModel!.checkInLocation,
-          checkOutLocation: attendanceModel!.checkOutLocation,
-          breakIn: attendanceModel!.breakIn,
-          breakOut: breakOutTime,
-        );
-
+        attendanceModel = attendanceModel!.copyWith(breakOut: breakOutTime);
         notifyListeners();
+        Utils.showSnackBar("Break ended successfully!", context, color: Colors.green);
       } else {
-        Utils.showSnackBar("You are not currently on a break!", context);
+        Utils.showSnackBar("You are not on a break!", context);
       }
     } catch (e) {
-      Utils.showSnackBar("Failed to end break. Please try again.", context);
+      Utils.showSnackBar("Failed to end break: $e", context, color: Colors.red);
     }
   }
 }
